@@ -466,7 +466,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-05-04 22:49:59" itemprop="dateModified" datetime="2021-05-04T22:49:59+08:00">2021-05-04</time>
+                <time title="修改时间：2021-05-05 01:13:17" itemprop="dateModified" datetime="2021-05-05T01:13:17+08:00">2021-05-05</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -509,7 +509,7 @@
                 <i class="far fa-file-word"></i>
               </span>
                 <span class="post-meta-item-text">本文字数：</span>
-              <span>1.9k</span>
+              <span>2.4k</span>
             </span>
             <span class="post-meta-item" title="阅读时长">
               <span class="post-meta-item-icon">
@@ -528,15 +528,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>ARM 成立于上世纪 80 年代，总部在英国剑桥。<code>ARM1</code> 是第一代，实现了 load, store, arithmetic operations, exception model, register set；第二代 <code>ARM2</code> 增加了 multiply, multiply-accumulate, coprocessors, 处理器仅仅支持 26bit 地址位宽。到了 <code>ARM3</code> 支持到了 32bit 地址空间，<code>ARM4</code> 增加了 16bit load/store，以及 kernel 级别的权限控制；从<code>ARMv4T</code> 开始，ARM 芯片被大规模使用，量产过十亿片。总结起来，经历了几次重大修改：</p>
-<ol>
-<li><code>ARMv4</code> 及之前：只使用32位定长的ARM指令集。</li>
-<li><code>ARMv4T</code>，在32位ARM指令集的基础上，增加了16位的<code>Thumb</code>指令集。这是第一个被广泛使用的架构，代表芯片<code>ARM7TDMI</code>和<code>ARM9TDMI</code>。</li>
-<li><code>ARMv5TE</code>，增加了<code>DSP</code>操作，饱和算法，<code>ARM</code>和<code>Thumb</code>切换。代表芯片：<code>ARM926EJ-S</code>。</li>
-<li><code>ARMv6</code>，对内存访问的架构有所调整，支持<code>SIMD</code>指令。代表芯片：<code>ARM1136JF-S</code>。这一代<code>Thumb2</code>成为可选项。</li>
-<li><code>ARMv7-A</code>，将<code>v6</code>时可选的<code>Thumb2</code>指令集变成必选项；支持<code>NEON</code>指令。代表芯片<code>Cortex-A8</code>, <code>A9</code>, <code>A15</code>, <code>A17</code>。</li>
-<li><code>ARMv8-A</code>，支持两种架构，64位的<code>AArch64</code>和<code>AArch32</code>。其中，<code>AArch32</code>跟原有的 v7-A 架构是基本一样的。代表芯片为<code>A57</code>, <code>A53</code>, <code>A72</code>, <code>A73</code>，<code>A75</code>, <code>A76</code> 等</li>
-</ol>
+          <p>基于<strong>ARM</strong>架构的<code>AISC</code>芯片主要是移动设备和嵌入式领域的王者，包括所有<strong>Android</strong>和<strong>iOS</strong>手机，各种平板电脑，以及越来越多的物联网设备。<br>2020年11月，Apple推出了搭载基于<code>ARMv8-A</code>64位处理器芯片<strong>M1</strong>的个人电脑，标志着<code>AISC</code>ARM架构正式落地个人PC市场。并且苹果宣布其旗下的系列产品，包括PC个人电脑，终将会替换为自研ARM芯片。<br>2021年4月，游戏和深度学习领域的<strong>GPU</strong>芯片霸主<strong>Nvidia</strong>正式宣布基于<strong>ARM</strong>自研CPU处理器，代号<code>Grace</code>。<br>这两个消息对<code>Intel</code>带来多大的影响我们暂且不谈，作为程序员我们更关注的是<code>x86</code>与<code>Arm</code>各自占据计算机设备半壁江山的今天，<code>ARM</code>凭借越来越明显的优势慢慢蚕食市场份额，将来一统天下也尚未可知。<br>那我们应该怎么做？</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2021/04/20/Arm-Intro/#more" rel="contents">
