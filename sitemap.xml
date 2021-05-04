@@ -44,14 +44,14 @@
   </url>
   
   <url>
-    <loc>https://www.xbwee.space/about/index.html</loc>
+    <loc>https://www.xbwee.space/categories/index.html</loc>
     
     <lastmod>2021-03-19</lastmod>
     
   </url>
   
   <url>
-    <loc>https://www.xbwee.space/categories/index.html</loc>
+    <loc>https://www.xbwee.space/about/index.html</loc>
     
     <lastmod>2021-03-19</lastmod>
     
@@ -109,7 +109,7 @@
 
   <url>
     <loc>https://www.xbwee.space/</loc>
-    <lastmod>2021-05-03</lastmod>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -117,7 +117,7 @@
   
   <url>
     <loc>https://www.xbwee.space/tags/%E5%8E%9F%E5%88%9B/</loc>
-    <lastmod>2021-05-03</lastmod>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
@@ -126,84 +126,84 @@
   
   <url>
     <loc>https://www.xbwee.space/categories/android/</loc>
-    <lastmod>2021-05-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://www.xbwee.space/categories/android/hal/</loc>
-    <lastmod>2021-05-03</lastmod>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://www.xbwee.space/categories/android/camera-hal/</loc>
-    <lastmod>2021-05-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://www.xbwee.space/categories/arm/</loc>
-    <lastmod>2021-05-03</lastmod>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://www.xbwee.space/categories/C/</loc>
-    <lastmod>2021-05-03</lastmod>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://www.xbwee.space/categories/arm/asm/</loc>
-    <lastmod>2021-05-03</lastmod>
+    <loc>https://www.xbwee.space/categories/arm/</loc>
+    <lastmod>2021-05-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://www.xbwee.space/categories/android/hal/</loc>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://www.xbwee.space/categories/android/camera-hal/usbcamera/</loc>
-    <lastmod>2021-05-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://www.xbwee.space/categories/arm/arch/</loc>
-    <lastmod>2021-05-03</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://www.xbwee.space/categories/arm/neon/</loc>
-    <lastmod>2021-05-03</lastmod>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://www.xbwee.space/categories/C/Android-NDK/</loc>
-    <lastmod>2021-05-03</lastmod>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://www.xbwee.space/categories/arm/neon/intrinsic-asm/</loc>
-    <lastmod>2021-05-03</lastmod>
+    <loc>https://www.xbwee.space/categories/arm/neon/</loc>
+    <lastmod>2021-05-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://www.xbwee.space/categories/arm/asm/</loc>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://www.xbwee.space/categories/C/Android-NDK/Compiler/</loc>
-    <lastmod>2021-05-03</lastmod>
+    <lastmod>2021-05-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://www.xbwee.space/categories/arm/neon/intrinsic-asm/</loc>
+    <lastmod>2021-05-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://www.xbwee.space/categories/arm/arch/</loc>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
