@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.xbwee.space","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="一个硬件设备对应一个模块（动态库），可以各自独立更新，模块版本与设备版本需要保持兼容性，也就是特定版本的模块，只能加载与之兼容的设备。通常情况模块具有向后兼容性，支持最高版本及其以下版本的设备。 模块封装了该类型设备的通用操作，接口很少发生变动或者只是增加新接口，确保二进制兼容性，兼容低版本设备。 设备封装了特定版本的硬件设备，接口变化更频繁，类似 camera 从 HALv1, HALv2 到目">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android HAL 介绍">
+<meta property="og:url" content="https://www.xbwee.space/2020/10/22/Android-HAL-Intro/index.html">
+<meta property="og:site_name" content="xbwee&#39;s blogs">
+<meta property="og:description" content="一个硬件设备对应一个模块（动态库），可以各自独立更新，模块版本与设备版本需要保持兼容性，也就是特定版本的模块，只能加载与之兼容的设备。通常情况模块具有向后兼容性，支持最高版本及其以下版本的设备。 模块封装了该类型设备的通用操作，接口很少发生变动或者只是增加新接口，确保二进制兼容性，兼容低版本设备。 设备封装了特定版本的硬件设备，接口变化更频繁，类似 camera 从 HALv1, HALv2 到目">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-10-22T02:48:12.000Z">
+<meta property="article:modified_time" content="2021-03-19T02:11:06.504Z">
+<meta property="article:author" content="xbwee">
+<meta property="article:tag" content="原创">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://www.xbwee.space/2020/10/22/Android-HAL-Intro/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Android HAL 介绍 | xbwee's blogs</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="xbwee's blogs" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">xbwee's blogs</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">思绪如风，偶尔在此停留</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">10</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">1</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">12</span></a>
+
+  </li>
+        <li class="menu-item menu-item-hot">
+
+    <a href="/hot/" rel="section"><i class="fa fa-signal fa-fw"></i>hot</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.xbwee.space/2020/10/22/Android-HAL-Intro/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://s.gravatar.com/avatar/72c684138f4483ba31279fe9c5be952c?s=80">
+      <meta itemprop="name" content="xbwee">
+      <meta itemprop="description" content="技术博客，杂记，随笔">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="xbwee's blogs">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android HAL 介绍
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-10-22 10:48:12" itemprop="dateCreated datePublished" datetime="2020-10-22T10:48:12+08:00">2020-10-22</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-03-19 10:11:06" itemprop="dateModified" datetime="2021-03-19T10:11:06+08:00">2021-03-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/android/" itemprop="url" rel="index"><span itemprop="name">android</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/android/hal/" itemprop="url" rel="index"><span itemprop="name">hal</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/10/22/Android-HAL-Intro/" class="post-meta-item leancloud_visitors" data-flag-title="Android HAL 介绍" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/10/22/Android-HAL-Intro/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/10/22/Android-HAL-Intro/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>5k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>5 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>一个硬件设备对应一个模块（动态库），可以各自独立更新，模块版本与设备版本需要保持兼容性，也就是特定版本的模块，只能加载与之兼容的设备。通常情况模块具有向后兼容性，支持最高版本及其以下版本的设备。</p>
+<p>模块封装了该类型设备的通用操作，接口很少发生变动或者只是增加新接口，确保二进制兼容性，兼容低版本设备。</p>
+<p>设备封装了特定版本的硬件设备，接口变化更频繁，类似 <strong>camera</strong> 从 <code>HALv1</code>, <code>HALv2</code> 到目前的 <code>HALv3</code>，封装成不同的设备子类，具体硬件根据其硬件特性选择实现不同版本的 device 接口。</p>
+<a id="more"></a>
+
+<p><code>hw_device_t</code> 作为 device 的基类，放置于继承的具体设备类型 <code>struct</code> 子类的第一个位置，好处是首地址相同，可以直接做类型转换。子类型需要实现对应版本的接口函数，<br><code>hw_module_t</code> 作为 module 的基类，放置于继承的具体模块类型 <code>struct</code> 子类的第一个位置，好处是首地址相同，可以直接做类型转换。基类定义了唯一一个接口函数。</p>
+<p><code>hw_module_methods_t.open</code>, 打开硬件设备。所有模块都需要实现该接口。不同类型的模块可以定义自己的接口函数，比如 <code>camera</code>, <code>gralloc</code>, <code>hwcomposer</code> 等等</p>
+<h2 id="模块加载"><a href="#模块加载" class="headerlink" title="模块加载"></a>模块加载</h2><p>指定模块名称 <strong>MODULE_ID</strong>，加载时根据模块名称查找对应的动态库并加载，获取模块结构体对象地址，调用 <strong>open device</strong> 打开硬件设备，即可使用设备提供的功能。</p>
+<p>路径查找，先根据 variant 确定动态库后缀名称，<code>&lt;MODULE_ID&gt;.variant.so</code>，按优先级依次是：</p>
+<ol>
+<li><strong>ro.hardware</strong></li>
+<li><strong>ro.product.board</strong></li>
+<li><strong>ro.board.platform</strong></li>
+<li><strong>ro.arch</strong></li>
+</ol>
+<p>完整名称确定后，按照如下优先级查找对应路径：</p>
+<ol>
+<li><strong>/odm/lib64/hw</strong></li>
+<li><strong>/vendor/lib64/hw</strong></li>
+<li><strong>/system/lib64/hw</strong></li>
+</ol>
+<p>所有模块的 <code>hw_module_t.hal_api_version</code> 字段必须填入 <code>HARDWARE_HAL_API_VERSION</code>，该值目前取值是 <strong>1.0</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; libhardware/include/hardware/hardware.h</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * The current HAL API version.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * All module implementations must set the hw_module_t.hal_api_version field</span></span><br><span class="line"><span class="comment"> * to this value when declaring the module with HAL_MODULE_INFO_SYM.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Note that previous implementations have always set this field to 0.</span></span><br><span class="line"><span class="comment"> * Therefore, libhardware HAL API will always consider versions 0.0 and 1.0</span></span><br><span class="line"><span class="comment"> * to be 100% binary compatible.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HARDWARE_HAL_API_VERSION HARDWARE_MAKE_API_VERSION(1, 0)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Name of the hal_module_info</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HAL_MODULE_INFO_SYM         HMI</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Name of the hal_module_info as a string</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HAL_MODULE_INFO_SYM_AS_STR  <span class="meta-string">&quot;HMI&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Get the module info associated with a module by id.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * @return: 0 == success, &lt;0 == error and *module == NULL</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">hw_get_module</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *id, <span class="keyword">const</span> struct <span class="keyword">hw_module_t</span> **<span class="keyword">module</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+
+
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; hardware/libhardware/hardware.c</span><br><span class="line"></span><br><span class="line"><span class="comment">/** Base path of the hal modules */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> defined(__LP64__)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HAL_LIBRARY_PATH1 <span class="meta-string">&quot;/system/lib64/hw&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HAL_LIBRARY_PATH2 <span class="meta-string">&quot;/vendor/lib64/hw&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HAL_LIBRARY_PATH3 <span class="meta-string">&quot;/odm/lib64/hw&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HAL_LIBRARY_PATH1 <span class="meta-string">&quot;/system/lib/hw&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HAL_LIBRARY_PATH2 <span class="meta-string">&quot;/vendor/lib/hw&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> HAL_LIBRARY_PATH3 <span class="meta-string">&quot;/odm/lib/hw&quot;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">char</span> *variant_keys[] = &#123;</span><br><span class="line">    <span class="string">&quot;ro.hardware&quot;</span>,  <span class="comment">/* This goes first so that it can pick up a different</span></span><br><span class="line"><span class="comment">                       file on the emulator. */</span></span><br><span class="line">    <span class="string">&quot;ro.product.board&quot;</span>,</span><br><span class="line">    <span class="string">&quot;ro.board.platform&quot;</span>,</span><br><span class="line">    <span class="string">&quot;ro.arch&quot;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Load the file defined by the variant and if successful</span></span><br><span class="line"><span class="comment"> * return the dlopen handle and the hmi.</span></span><br><span class="line"><span class="comment"> * @return 0 = success, !0 = failure.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">load</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *id,</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="keyword">const</span> <span class="keyword">char</span> *path,</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="keyword">const</span> struct <span class="keyword">hw_module_t</span> **pHmi)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> status = -EINVAL;</span><br><span class="line">    <span class="keyword">void</span> *handle = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">hw_module_t</span> *<span class="title">hmi</span> =</span> <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">    handle = dlopen(path, RTLD_NOW);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Get the address of the struct hal_module_info. */</span></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *sym = HAL_MODULE_INFO_SYM_AS_STR;</span><br><span class="line">    hmi = (struct <span class="keyword">hw_module_t</span> *)dlsym(handle, sym);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Check that the id matches */</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">strcmp</span>(id, hmi-&gt;id) != <span class="number">0</span>) &#123;</span><br><span class="line">        ALOGE(<span class="string">&quot;load: id=%s != hmi-&gt;id=%s&quot;</span>, id, hmi-&gt;id);</span><br><span class="line">        status = -EINVAL;</span><br><span class="line">        <span class="keyword">goto</span> done;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    hmi-&gt;dso = handle;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* success */</span></span><br><span class="line">    status = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    *pHmi = hmi;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> status;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>举个示例，gralloc 的默认实现。</p>
+<ol>
+<li>首先定义模块名称 MODULE_ID 是 “gralloc”，需要写入对应的 <code>hw_module_t.id</code> 字段，加载模块时会判断是否匹配。则对应动态库是 “gralloc.variant.so”, variant 会在加载时搜索确定。</li>
+<li>其次是定义全局可见，并且名称固定为 <code>HAL_MODULE_INFO_SYM</code> 的结构体变量，模块加载时透过 <code>dlsym</code> 搜索该变量，获取到结构体对象地址。</li>
+</ol>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt;&gt; libhardware/include/hardware/gralloc.h</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * The id of this module</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> GRALLOC_HARDWARE_MODULE_ID <span class="meta-string">&quot;gralloc&quot;</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">&gt;&gt;&gt; libhardware/modules/gralloc/gralloc.cpp</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">hw_module_methods_t</span> <span class="title">gralloc_module_methods</span> =</span> &#123;</span><br><span class="line">        .open = gralloc_device_open</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">private_module_t</span> <span class="title">HAL_MODULE_INFO_SYM</span> =</span> &#123;</span><br><span class="line">    .base = &#123;</span><br><span class="line">        .common = &#123;</span><br><span class="line">            .tag = HARDWARE_MODULE_TAG,</span><br><span class="line">            .version_major = <span class="number">1</span>,</span><br><span class="line">            .version_minor = <span class="number">0</span>,</span><br><span class="line">            .id = GRALLOC_HARDWARE_MODULE_ID,</span><br><span class="line">            .name = <span class="string">&quot;Graphics Memory Allocator Module&quot;</span>,</span><br><span class="line">            .author = <span class="string">&quot;The Android Open Source Project&quot;</span>,</span><br><span class="line">            .methods = &amp;gralloc_module_methods</span><br><span class="line">        &#125;,</span><br><span class="line">        .registerBuffer = gralloc_register_buffer,</span><br><span class="line">        .unregisterBuffer = gralloc_unregister_buffer,</span><br><span class="line">        .lock = gralloc_lock,</span><br><span class="line">        .unlock = gralloc_unlock,</span><br><span class="line">    &#125;,</span><br><span class="line">    .framebuffer = <span class="number">0</span>,</span><br><span class="line">    .flags = <span class="number">0</span>,</span><br><span class="line">    .numBuffers = <span class="number">0</span>,</span><br><span class="line">    .bufferMask = <span class="number">0</span>,</span><br><span class="line">    .lock = PTHREAD_MUTEX_INITIALIZER,</span><br><span class="line">    .currentBuffer = <span class="number">0</span>,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Every hardware module must have a data structure named HAL_MODULE_INFO_SYM</span></span><br><span class="line"><span class="comment"> * and the fields of this data structure must begin with hw_module_t</span></span><br><span class="line"><span class="comment"> * followed by module specific information.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">gralloc_module_t</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">hw_module_t</span> <span class="title">common</span>;</span></span><br><span class="line">    ...</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p><code>gralloc.default.so</code> 符号表，可以看到有 <strong>HMI</strong> 符号，获取到的就是 <code>private_module_t</code>结构体对象地址</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Symbol table &#x27;.dynsym&#x27; contains 33 entries:</span><br><span class="line">   Num:    Value          Size Type    Bind   Vis      Ndx Name</span><br><span class="line">     <span class="number">0</span>: <span class="number">0000000000000000</span>     <span class="number">0</span> NOTYPE  LOCAL  DEFAULT  UND</span><br><span class="line">    <span class="number">24</span>: <span class="number">0000000000002</span>a18   <span class="number">332</span> FUNC    GLOBAL DEFAULT   <span class="number">13</span> _Z14fb_device_openPK11hw_</span><br><span class="line">    <span class="number">25</span>: <span class="number">0000000000002e94</span>   <span class="number">200</span> FUNC    GLOBAL DEFAULT   <span class="number">13</span> _Z25gralloc_unregister_bu</span><br><span class="line">    <span class="number">26</span>: <span class="number">0000000000004010</span>   <span class="number">688</span> OBJECT  GLOBAL DEFAULT   <span class="number">15</span> HMI</span><br><span class="line">    <span class="number">27</span>: <span class="number">0000000000003060</span>   <span class="number">124</span> FUNC    GLOBAL DEFAULT   <span class="number">13</span> _Z12gralloc_lockPK16grall</span><br><span class="line">    <span class="number">28</span>: <span class="number">00000000000030</span>dc   <span class="number">116</span> FUNC    GLOBAL DEFAULT   <span class="number">13</span> _Z14gralloc_unlockPK16gra</span><br><span class="line">    <span class="number">29</span>: <span class="number">0000000000002f</span>f8   <span class="number">104</span> FUNC    GLOBAL DEFAULT   <span class="number">13</span> _Z15terminateBufferPK16gr</span><br><span class="line">    <span class="number">30</span>: <span class="number">0000000000002504</span>  <span class="number">1132</span> FUNC    GLOBAL DEFAULT   <span class="number">13</span> _Z20mapFrameBufferLockedP</span><br><span class="line">    <span class="number">31</span>: <span class="number">0000000000002</span>d68   <span class="number">300</span> FUNC    GLOBAL DEFAULT   <span class="number">13</span> _Z23gralloc_register_buff</span><br><span class="line">    <span class="number">32</span>: <span class="number">0000000000002f</span>5c   <span class="number">156</span> FUNC    GLOBAL DEFAULT   <span class="number">13</span> _Z9mapBufferPK16gralloc_m</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>xbwee
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://www.xbwee.space/2020/10/22/Android-HAL-Intro/" title="Android HAL 介绍">https://www.xbwee.space/2020/10/22/Android-HAL-Intro/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%8E%9F%E5%88%9B/" rel="tag"># 原创</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2020/10/23/Android-Camera-HAL-Intro/" rel="next" title="Android Camera HAL 介绍">
+      Android Camera HAL 介绍 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9D%97%E5%8A%A0%E8%BD%BD"><span class="nav-number">1.</span> <span class="nav-text">模块加载</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="xbwee"
+      src="https://s.gravatar.com/avatar/72c684138f4483ba31279fe9c5be952c?s=80">
+  <p class="site-author-name" itemprop="name">xbwee</p>
+  <div class="site-description" itemprop="description">技术博客，杂记，随笔</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xbwee1024" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xbwee1024" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:xiaobin.wee@gmail.com" title="E-Mail → mailto:xiaobin.wee@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">xbwee</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">47k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">43 分钟</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : '4GgdYKJV5fgexya6xmgU7OyD-gzGzoHsz',
+      appKey     : '4UK5s8XhJdCYQ9gy48gp9CJf',
+      placeholder: "秒注册发评论",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-CN' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.xbwee.space","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="camera.v4l2 实现了 Camera HALv3 接口，底层调用了 Video For Linux 2(V4L2)，因此适用范围比较广泛，可以适配兼容 V4L2 接口的所有设备。不过相对于 Android Camera 来说，V4L2 存在一些局限性，内置相机具备的一些功能可能不支持，但对于大多数应用场景来说，是没有问题的。 这篇文章根据官方介绍，结合实践经验来介绍一下 camera.v4">
+<meta property="og:type" content="article">
+<meta property="og:title" content="V4L2 Camera HALv3 介绍">
+<meta property="og:url" content="https://www.xbwee.space/2020/10/25/V4L2-Camera-HALv3/index.html">
+<meta property="og:site_name" content="xbwee&#39;s blogs">
+<meta property="og:description" content="camera.v4l2 实现了 Camera HALv3 接口，底层调用了 Video For Linux 2(V4L2)，因此适用范围比较广泛，可以适配兼容 V4L2 接口的所有设备。不过相对于 Android Camera 来说，V4L2 存在一些局限性，内置相机具备的一些功能可能不支持，但对于大多数应用场景来说，是没有问题的。 这篇文章根据官方介绍，结合实践经验来介绍一下 camera.v4">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-10-25T06:13:21.000Z">
+<meta property="article:modified_time" content="2021-03-19T02:11:06.505Z">
+<meta property="article:author" content="xbwee">
+<meta property="article:tag" content="原创">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://www.xbwee.space/2020/10/25/V4L2-Camera-HALv3/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>V4L2 Camera HALv3 介绍 | xbwee's blogs</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="xbwee's blogs" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">xbwee's blogs</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">思绪如风，偶尔在此停留</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">10</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">1</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">12</span></a>
+
+  </li>
+        <li class="menu-item menu-item-hot">
+
+    <a href="/hot/" rel="section"><i class="fa fa-signal fa-fw"></i>hot</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.xbwee.space/2020/10/25/V4L2-Camera-HALv3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://s.gravatar.com/avatar/72c684138f4483ba31279fe9c5be952c?s=80">
+      <meta itemprop="name" content="xbwee">
+      <meta itemprop="description" content="技术博客，杂记，随笔">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="xbwee's blogs">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          V4L2 Camera HALv3 介绍
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-10-25 14:13:21" itemprop="dateCreated datePublished" datetime="2020-10-25T14:13:21+08:00">2020-10-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-03-19 10:11:06" itemprop="dateModified" datetime="2021-03-19T10:11:06+08:00">2021-03-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/android/" itemprop="url" rel="index"><span itemprop="name">android</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/android/camera-hal/" itemprop="url" rel="index"><span itemprop="name">camera hal</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/android/camera-hal/usbcamera/" itemprop="url" rel="index"><span itemprop="name">usbcamera</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/10/25/V4L2-Camera-HALv3/" class="post-meta-item leancloud_visitors" data-flag-title="V4L2 Camera HALv3 介绍" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2020/10/25/V4L2-Camera-HALv3/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2020/10/25/V4L2-Camera-HALv3/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.9k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><code>camera.v4l2</code> 实现了 <strong>Camera HALv3</strong> 接口，底层调用了 <code>Video For Linux 2(V4L2)</code>，因此适用范围比较广泛，可以适配兼容 <code>V4L2</code> 接口的所有设备。不过相对于 <code>Android Camera</code> 来说，<code>V4L2</code> 存在一些局限性，内置相机具备的一些功能可能不支持，但对于大多数应用场景来说，是没有问题的。</p>
+<p>这篇文章根据官方介绍，结合实践经验来介绍一下 <code>camera.v4l2</code> 的一些特性。有空再补充一些细节~</p>
+<a id="more"></a>
+
+<h2 id="当前状态"><a href="#当前状态" class="headerlink" title="当前状态"></a>当前状态</h2><p><code>camera.v4l2</code> 可以自由使用，但是它不是由 <strong>Android Camera team</strong> 官方维护的， 实际上官方维护的是另外一个随着 <strong>Android P</strong> 一起更新发布的实现：<a target="_blank" rel="noopener" href="https://source.android.com/devices/camera/external-usb-cameras">External USB Cameras</a></p>
+<p>该 HAL 实现在现有 Android 系统默认是关闭的，不会编译到系统里面。可以按照如下方式打开</p>
+<h2 id="编译方法"><a href="#编译方法" class="headerlink" title="编译方法"></a>编译方法</h2><p>修改 <device>.mk 文件，增加如下配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">USE_CAMERA_V4L2_HAL :&#x3D; true</span><br><span class="line">PRODUCT_PACKAGES +&#x3D; camera.v4l2</span><br><span class="line">PRODUCT_PROPERTY_OVERRIDES +&#x3D; ro.hardware.camera&#x3D;v4l2</span><br></pre></td></tr></table></figure>
+<p>第一行会打开编译选项，默认关闭，防止一些设备不支持出现问题。第二行告诉编译系统将库打包到 <code>system image</code> 里面；最后一行告诉硬件设备管理器加载 <code>V4L2 HAL</code> 替换掉默认的 <code>Camera HAL</code>.</p>
+<h2 id="前提条件"><a href="#前提条件" class="headerlink" title="前提条件"></a>前提条件</h2><ul>
+<li>camera 必须支持 <code>BGR32</code>, <code>YUV420</code> 和 <code>JPEG</code> 格式</li>
+<li>设备上的 <strong>gralloc</strong> 和其它 <strong>graphics module</strong> 必须使用 <code>HAL_PIXEL_FORMAT_RGBA_8888</code> 作为 <code>HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED</code></li>
+</ul>
+<h2 id="HAL-代码解析"><a href="#HAL-代码解析" class="headerlink" title="HAL 代码解析"></a>HAL 代码解析</h2><p><strong>V4L2 Camera HAL</strong> 包含 3 个部分：HALv3 Camera 实现， V4L2 wrapper，以及 Metadata</p>
+<p>同时，你应该要了解一下 <strong>Android Framework</strong> 是如何与 <strong>HAL</strong> 打交道的，可以参考 <a href="/2020/10/23/Android-Camera-HAL-Intro/" title="Android Camera HAL 介绍">Android Camera HAL 介绍</a></p>
+<h3 id="Camera-amp-HAL-接口"><a href="#Camera-amp-HAL-接口" class="headerlink" title="Camera &amp; HAL 接口"></a>Camera &amp; HAL 接口</h3><p>接口实现主要是这两个类：<code>Camera</code>, <code>V4L2CameraHal</code></p>
+<p><code>V4L2CameraHAL</code> 主要负责相机系统初始化，创建时，会搜索 <code>dev/video*</code> 设备节点，并查询是否满足 <code>V4L2_CAP_VIDEO_CAPTURE</code> 然后创建对应的 <code>V4L2Camera</code> 对象，并且对 Framework 可见。后续流程调用会被 dispatch 到特定的设备节点。</p>
+<p><code>Camera</code> 类实现了 camera 设备的通用操作，打开/关闭设备、configuring streams、preparing and tradking requests 等等。具体的拍照、设置流程则是由其子类 <code>V4L2Camera</code> 实现。</p>
+<p><code>Camera</code> 类在调用具体流程的时候，会应用上 <code>V4L2Camera</code> 初始化之后的 <code>Metadata</code> 属性，比如 <strong>in-flight</strong> request per stream 数量的限制。换句话说，<code>Camera</code> 类实现具体的 HAL 调用流程，与而具体的设备无关，而 <code>V4L2Camera</code> 负责设备相关的属性设置、功能实现（透过 <code>V4L2Wrapper</code> 类）。所以理论上，可以把 V4L2 实现换成其它某种设备实现，只要传递正确的 metadata 信息，<code>Camera</code> 类依然会按照预期的工作。</p>
+<h3 id="V4L2-具体实现"><a href="#V4L2-具体实现" class="headerlink" title="V4L2 具体实现"></a>V4L2 具体实现</h3><p><code>V4L2Camera</code> 实现所有拍照功能。它包含一些方法用来获取或设置参数，但它的核心能力主要是在 <code>request queue</code> 上。 <code>Camera</code> 提交 <code>CaptureRequest</code> 到 <code>request queue</code> 排队，<code>V4L2Camera</code> 异步地从队列里取出来执行，处理过程主要分三个阶段：</p>
+<ul>
+<li>接收 request 请求：收到 request 并放入等待队列。</li>
+<li>enqueue：读取 request 配置并应用到 v4l2 设备，执行拍照，并传递 buffer 给 v4l2 驱动。</li>
+<li>dequeue：从驱动获取到处理完成的 frame，buffer 内容 copy 到 request output 并传递给 <code>Camera</code> 做后续处理（验证结果，填入 <code>CaptureResult</code> 并返回给 Framework）</li>
+</ul>
+<p>这项工作的大部分是 <code>V4L2Wrapper</code> 类完成的，它基于 HAL 的功能需求，包装了 v4l2 ioctls, 提供简单的输入输出调用功能。自动填入 ioctls 需要的常量参数，抽取 HAL 所需信息，同时把相关功能暴露给 Metadata 系统，获取、设置 meta 控制参数。</p>
+<h3 id="Metadata"><a href="#Metadata" class="headerlink" title="Metadata"></a>Metadata</h3><p><code>Metadata</code> 子系统主要目的是简化 (system/media/camera/docs/docs.html) 的相关操作。顶层是 <code>Metadata</code> 和 <code>PartialMetadataInterface</code> 类，<code>Metadata</code> 类提供高层次功能，包括初始化 <code>static metadata</code>，验证，获取、设定相关配置参数等等，它把这些需求下发给对应的 <code>PartialMetadataInterfaces</code> 模块，各个子模块负责处理自己相关的 metadata 和任务。</p>
+<p>已经实现了几个具体类负责这项功能，主要有 3 类：</p>
+<ul>
+<li>Properties：静态属性, static metadata 等</li>
+<li>Controls：动态属性，或者标示允许值的静态属性</li>
+<li>States：动态的只读的属性</li>
+</ul>
+<p>针对不同的功能需求和不同的 <code>metadata tags</code>, 还有一些更具体的接口和子类型来区分处理。</p>
+<h4 id="Metadata-Factory"><a href="#Metadata-Factory" class="headerlink" title="Metadata Factory"></a>Metadata Factory</h4><p>为了满足 HAL 规范的要求, V4L2 Camera HAL 使用一个 metadata factory 工厂方法，初始化 100+ metadata 参数，大多数参数都是固定值，只有少部分对应到 v4l2 驱动相关的参数。</p>
+<p>这套 HAL 实现最初是为了提供给 <strong>Raspberry Pi</strong> camera module v2.1 使用的，所以大多固定默认值的设置主要是适配它的相机模组。</p>
+<h2 id="V4L2-不足之处"><a href="#V4L2-不足之处" class="headerlink" title="V4L2 不足之处"></a>V4L2 不足之处</h2><ul>
+<li>不支持多个 <code>stream</code>，如果 <strong>preview</strong> 与 <strong>capture</strong> 格式不一样，必须重新配置 <code>stream</code>; 因此不支持 <strong>Android Camera (v1) API</strong>，只能使用 <strong>Camera2 API</strong></li>
+<li>有些 metadata 信息无法从 V4L2 获取到，比如一些物理属性</li>
+<li>Android 系统实现要求 HAL 必须支持 YUV420， JPEG 以及 Graphics 子系统定义的（implementation defined），但实际上只有少数 camera 完整支持这几种格式（比如树莓派相机），因此 HAL 内部实现了格式转换以扩展其适用范围。</li>
+<li>V4L2 并不能确保参数设置立即生效，所以也没有办法确认当前帧给定的设置是否已生效。因此 <code>CaptureRequest</code> 和 <code>CaptureResult</code> 所带的参数有可能生效，有可能没有。在使用到这些参数的时候，需要注意，它不一定是准确的。</li>
+<li>另外，V4L2 的很多功能，并没有包含在 HAL 实现里面(比如与camera功能无关的),所以功能上讲, HAL 只是完整 V4L2 的一个子集。</li>
+</ul>
+<h2 id="已知问题"><a href="#已知问题" class="headerlink" title="已知问题"></a>已知问题</h2><ul>
+<li>该库未实现的功能包括：high speed capture, flash torch mode, hotplugging/unplugging</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>xbwee
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://www.xbwee.space/2020/10/25/V4L2-Camera-HALv3/" title="V4L2 Camera HALv3 介绍">https://www.xbwee.space/2020/10/25/V4L2-Camera-HALv3/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%8E%9F%E5%88%9B/" rel="tag"># 原创</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/10/23/Android-Camera-HAL-Intro/" rel="prev" title="Android Camera HAL 介绍">
+      <i class="fa fa-chevron-left"></i> Android Camera HAL 介绍
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/11/02/Android-USB-Camera-Implementations/" rel="next" title="Android USB Camera 的实现方案">
+      Android USB Camera 的实现方案 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BD%93%E5%89%8D%E7%8A%B6%E6%80%81"><span class="nav-number">1.</span> <span class="nav-text">当前状态</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%96%B9%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">编译方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E6%8F%90%E6%9D%A1%E4%BB%B6"><span class="nav-number">3.</span> <span class="nav-text">前提条件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HAL-%E4%BB%A3%E7%A0%81%E8%A7%A3%E6%9E%90"><span class="nav-number">4.</span> <span class="nav-text">HAL 代码解析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Camera-amp-HAL-%E6%8E%A5%E5%8F%A3"><span class="nav-number">4.1.</span> <span class="nav-text">Camera &amp; HAL 接口</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#V4L2-%E5%85%B7%E4%BD%93%E5%AE%9E%E7%8E%B0"><span class="nav-number">4.2.</span> <span class="nav-text">V4L2 具体实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Metadata"><span class="nav-number">4.3.</span> <span class="nav-text">Metadata</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Metadata-Factory"><span class="nav-number">4.3.1.</span> <span class="nav-text">Metadata Factory</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#V4L2-%E4%B8%8D%E8%B6%B3%E4%B9%8B%E5%A4%84"><span class="nav-number">5.</span> <span class="nav-text">V4L2 不足之处</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%B2%E7%9F%A5%E9%97%AE%E9%A2%98"><span class="nav-number">6.</span> <span class="nav-text">已知问题</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="xbwee"
+      src="https://s.gravatar.com/avatar/72c684138f4483ba31279fe9c5be952c?s=80">
+  <p class="site-author-name" itemprop="name">xbwee</p>
+  <div class="site-description" itemprop="description">技术博客，杂记，随笔</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/xbwee1024" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;xbwee1024" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:xiaobin.wee@gmail.com" title="E-Mail → mailto:xiaobin.wee@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">xbwee</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">47k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">43 分钟</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : '4GgdYKJV5fgexya6xmgU7OyD-gzGzoHsz',
+      appKey     : '4UK5s8XhJdCYQ9gy48gp9CJf',
+      placeholder: "秒注册发评论",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : true,
+      lang       : 'zh-CN' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
