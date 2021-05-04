@@ -273,7 +273,7 @@
       
         <p><code>camera.v4l2</code> 实现了 <strong>Camera HALv3</strong> 接口，底层调用了 <code>Video For Linux 2(V4L2)</code>，因此适用范围比较广泛，可以适配兼容 <code>V4L2</code> 接口的所有设备。不过相对于 <code>Android Camera</code> 来说，<code>V4L2</code> 存在一些局限性，内置相机具备的一些功能可能不支持，但对于大多数应用场景来说，是没有问题的。</p>
 <p>这篇文章根据官方介绍，结合实践经验来介绍一下 <code>camera.v4l2</code> 的一些特性。有空再补充一些细节~</p>
-<a id="more"></a>
+<span id="more"></span>
 
 <h2 id="当前状态"><a href="#当前状态" class="headerlink" title="当前状态"></a>当前状态</h2><p><code>camera.v4l2</code> 可以自由使用，但是它不是由 <strong>Android Camera team</strong> 官方维护的， 实际上官方维护的是另外一个随着 <strong>Android P</strong> 一起更新发布的实现：<a target="_blank" rel="noopener" href="https://source.android.com/devices/camera/external-usb-cameras">External USB Cameras</a></p>
 <p>该 HAL 实现在现有 Android 系统默认是关闭的，不会编译到系统里面。可以按照如下方式打开</p>
