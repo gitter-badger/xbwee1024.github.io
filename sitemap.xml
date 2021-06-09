@@ -86,14 +86,14 @@
   </url>
   
   <url>
-    <loc>https://www.xbwee.space/2020/10/22/Android-HAL-Intro/</loc>
+    <loc>https://www.xbwee.space/2020/11/02/Android-USB-Camera-Implementations/</loc>
     
     <lastmod>2021-03-19</lastmod>
     
   </url>
   
   <url>
-    <loc>https://www.xbwee.space/2020/11/02/Android-USB-Camera-Implementations/</loc>
+    <loc>https://www.xbwee.space/2020/10/22/Android-HAL-Intro/</loc>
     
     <lastmod>2021-03-19</lastmod>
     
@@ -132,14 +132,14 @@
   </url>
   
   <url>
-    <loc>https://www.xbwee.space/categories/android/hal/</loc>
+    <loc>https://www.xbwee.space/categories/android/camera-hal/</loc>
     <lastmod>2021-06-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://www.xbwee.space/categories/android/camera-hal/</loc>
+    <loc>https://www.xbwee.space/categories/android/hal/</loc>
     <lastmod>2021-06-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -167,14 +167,14 @@
   </url>
   
   <url>
-    <loc>https://www.xbwee.space/categories/arm/asm/</loc>
+    <loc>https://www.xbwee.space/categories/arm/arch/</loc>
     <lastmod>2021-06-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://www.xbwee.space/categories/arm/arch/</loc>
+    <loc>https://www.xbwee.space/categories/arm/asm/</loc>
     <lastmod>2021-06-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
