@@ -6,7 +6,7 @@
   <link href="https://www.xbwee.space/atom.xml" rel="self"/>
   
   <link href="https://www.xbwee.space/"/>
-  <updated>2021-04-27T07:16:11.831Z</updated>
+  <updated>2021-05-18T06:49:45.723Z</updated>
   <id>https://www.xbwee.space/</id>
   
   <author>
@@ -21,18 +21,12 @@
     <link href="https://www.xbwee.space/2021/04/27/Arm-ASM-Intro/"/>
     <id>https://www.xbwee.space/2021/04/27/Arm-ASM-Intro/</id>
     <published>2021-04-27T06:18:24.000Z</published>
-    <updated>2021-04-27T07:16:11.831Z</updated>
+    <updated>2021-05-18T06:49:45.723Z</updated>
     
-    <content type="html"><![CDATA[<span id="more"></span><h1 id="ARMv8-A-寄存器"><a href="#ARMv8-A-寄存器" class="headerlink" title="ARMv8-A 寄存器"></a>ARMv8-A 寄存器</h1><h2 id="AArch32"><a href="#AArch32" class="headerlink" title="AArch32"></a>AArch32</h2><h2 id="AArch64"><a href="#AArch64" class="headerlink" title="AArch64"></a>AArch64</h2><h2 id="Procedure-Call-Standard-PCS-介绍"><a href="#Procedure-Call-Standard-PCS-介绍" class="headerlink" title="Procedure Call Standard (PCS) 介绍"></a>Procedure Call Standard (PCS) 介绍</h2><h1 id="C-C-调用规则"><a href="#C-C-调用规则" class="headerlink" title="C/C++ 调用规则"></a>C/C++ 调用规则</h1><table><thead><tr><th align="left">调用规则</th><th align="left"><code>__cdecl</code></th><th align="left"><code>__stdcall</code></th><th align="left"><code>__fastcall</code></th></tr></thead><tbody><tr><td align="left">使用场合</td><td align="left">C/C++ 默认的函数调用协议</td><td align="left">Windows API默认的函数调用协议</td><td align="left">msvc x86 only. ARM, x64 默认开启，并且忽略其它两个协议</td></tr><tr><td align="left">输入参数入栈</td><td align="left">由右向左入栈</td><td align="left">由右向左入栈</td><td align="left">从左开始 2 个 DWORD 或更小的参数放入CPU的<code>ECX</code>和<code>EDX</code>寄存器，其余参数从右向左入栈</td></tr><tr><td align="left">恢复现场</td><td align="left">Caller 清除栈内数据。支持可变参数。代码更大</td><td align="left">Callee 清除栈内数据</td><td align="left">Callee 清除栈内数据</td></tr></tbody></table><h1 id="示例代码"><a href="#示例代码" class="headerlink" title="示例代码"></a>示例代码</h1>]]></content>
+    <content type="html"><![CDATA[<p>主要介绍<strong>ARM</strong>汇编的入门基础，包括<strong>ARM</strong>体系结构，汇编语法，嵌入式汇编，以及寄存器等</p><span id="more"></span><h1 id="ARMv8-A-体系结构概述"><a href="#ARMv8-A-体系结构概述" class="headerlink" title="ARMv8-A 体系结构概述"></a>ARMv8-A 体系结构概述</h1><p><strong>ARM</strong>处理器是典型的<strong>精简指令集(RISC)**架构，遵循</strong>RISC**架构的特点：</p><ul><li>一份统一的寄存器文件；</li><li>加载/存储架构，只有<code>load/store</code>指令才能访问内存，数据处理指令智能操作寄存器的内容; </li><li>单一的寻址模式，内存地址只由寄存器内容和指令来指定。</li></ul><h2 id="指令集"><a href="#指令集" class="headerlink" title="指令集"></a>指令集</h2><p>截至目前，ARM 系列处理器总共 <code>ARM</code>, <code>Thumb</code>, <code>Thumb-2</code>, <code>A32</code>, <code>A64</code> 五种指令集，但其实<code>ARM</code>与<code>A32</code>都是<strong>32</strong>位指令，只是出现的时期和叫法不一样。所以严格来讲，总共<strong>4</strong>种指令集：</p><ul><li>16 位指令集，<code>Thumb</code></li><li>16/32 位混合指令集, <code>Thumb-2</code></li><li>32 位指令集，<code>A32</code></li><li>64 位指令集, <code>A64</code></li></ul><p>简单的细节描述如下，如果想了解更多<strong>ARM</strong>相关信息，也可以参考另外一篇文章</p><a href="/2021/04/20/Arm-Intro/" title="Arm 入门简介">Arm 入门简介</a><p><code>ARMv1</code>~`ARMv3<code>指令位宽只有**26bit**，没有大规模量产。</code>ARMv4<code> 开始，</code>ARM<code>指令集是一组提供一整套运算的**32**位指令。</code>ARMv4T<code>及更高版本定义了一个名为</code>Thumb<code>的**16**位指令集。**32**位</code>ARM<code>指令的多数功能都可用，但有些运算需要与其他指令结合使用。</code>Thumb<code>指令集提供了更好的代码密度，但会损害性能.</code>ARMv6T2<code>定义了</code>Thumb-2<code>指令集，它与 </code>Thumb<code>相比有了重大改进。</code>Thumb-2<code>提供了几乎与</code>ARM<code>指令集完全相同的功能。它同时具有**16**位和**32**位指令，并可同时实现类似于</code>ARM<code>的性能以及类似于</code>Thumb<code>的代码密度。 在</code>ARMv6<code>及更高版本中，所有</code>ARM<code>和</code>Thumb<code>指令都是小端的。在</code>ARMv6T2<code>及更高版本中，所有</code>Thumb-2<code>指令获取也都是小端的。</code>ARMv7<code>定义了</code>Thumb-2<code> 执行环境 (</code>Thumb-2EE<code>)。 运行在 </code>Thumb-2EE<code>环境下的指令集是基于</code>Thumb-2<code>的，但有一些变更和补充，从而可以更好地适用于动态生成的代码，即就在执行前或执行期间在设备上编译的代码。</code>ARMv8<code> 在兼容**32**位指令集的基础上，正式引入**64**位指令集，分别是运行于</code>AArch32<code>执行状态的</code>A32<code>指令集，它完全兼容早期的指令，以及运行于</code>AArch64<code>状态的</code>A64`指令集。</p><h2 id="执行状态-Execution-State"><a href="#执行状态-Execution-State" class="headerlink" title="执行状态(Execution State)"></a>执行状态(Execution State)</h2><p>早期的<code>ARM</code>、<code>Thumb</code>以及<code>Thumb-2EE</code>, 到<code>ARMv8</code>的<code>AArch64</code>, <code>AArch32</code>, 代表指令运行的环境或者机器硬件状态，某个特定状态智能执行对应的指令集，否则会出问题，具体描述如下。</p><h2 id="AArch32"><a href="#AArch32" class="headerlink" title="AArch32"></a>AArch32</h2><h2 id="AArch64"><a href="#AArch64" class="headerlink" title="AArch64"></a>AArch64</h2><h2 id="Procedure-Call-Standard-PCS-介绍"><a href="#Procedure-Call-Standard-PCS-介绍" class="headerlink" title="Procedure Call Standard (PCS) 介绍"></a>Procedure Call Standard (PCS) 介绍</h2><h1 id="C-C-调用规则"><a href="#C-C-调用规则" class="headerlink" title="C/C++ 调用规则"></a>C/C++ 调用规则</h1><table><thead><tr><th align="left">调用规则</th><th align="left"><code>__cdecl</code></th><th align="left"><code>__stdcall</code></th><th align="left"><code>__fastcall</code></th></tr></thead><tbody><tr><td align="left">使用场合</td><td align="left">C/C++ 默认的函数调用协议</td><td align="left">Windows API默认的函数调用协议</td><td align="left">msvc x86 only. ARM, x64 默认开启，并且忽略其它两个协议</td></tr><tr><td align="left">输入参数入栈</td><td align="left">由右向左入栈</td><td align="left">由右向左入栈</td><td align="left">从左开始 2 个 DWORD 或更小的参数放入CPU的<code>ECX</code>和<code>EDX</code>寄存器，其余参数从右向左入栈</td></tr><tr><td align="left">恢复现场</td><td align="left">Caller 清除栈内数据。支持可变参数。代码更大</td><td align="left">Callee 清除栈内数据</td><td align="left">Callee 清除栈内数据</td></tr></tbody></table><h1 id="ARM-Thumb-Unified-Assembly-Language-Instructions"><a href="#ARM-Thumb-Unified-Assembly-Language-Instructions" class="headerlink" title="ARM/Thumb Unified Assembly Language Instructions"></a>ARM/Thumb Unified Assembly Language Instructions</h1><p>汇编指令可以分为以下 4 类：</p><ul><li>数据处理（ALU 相关）</li><li>访存指令 （load and store）</li><li>流程控制 （for loop, goto, condition…）</li><li>系统控制（coprocessor，debug，mode change…）</li></ul>]]></content>
     
     
-      
-      
-    <summary type="html">&lt;span id=&quot;more&quot;&gt;&lt;/span&gt;
-
-
-&lt;h1 id=&quot;ARMv8-A-寄存器&quot;&gt;&lt;a href=&quot;#ARMv8-A-寄存器&quot; class=&quot;headerlink&quot; title=&quot;ARMv8-A 寄存器&quot;&gt;&lt;/a&gt;ARMv8-A 寄存器&lt;/h1&gt;&lt;h2 id=&quot;AAr</summary>
-      
+    <summary type="html">&lt;p&gt;主要介绍&lt;strong&gt;ARM&lt;/strong&gt;汇编的入门基础，包括&lt;strong&gt;ARM&lt;/strong&gt;体系结构，汇编语法，嵌入式汇编，以及寄存器等&lt;/p&gt;</summary>
     
     
     
@@ -50,18 +44,17 @@
     <link href="https://www.xbwee.space/2021/04/20/Arm-Neon-Intro/"/>
     <id>https://www.xbwee.space/2021/04/20/Arm-Neon-Intro/</id>
     <published>2021-04-20T11:05:58.000Z</published>
-    <updated>2021-04-28T05:41:32.785Z</updated>
+    <updated>2021-05-06T02:10:27.737Z</updated>
     
-    <content type="html"><![CDATA[<p>ARMv8-A 上，A32，A64都支持<code>SIMD</code>, 但是有区别：</p><ol><li>A64 的指令助记符和语法重新设计了，跟A32完全不一样</li><li>A64 有 32个 128bit 向量寄存器。A32 只有 16个</li><li>不同的寄存器packing scheme：<ul><li>A64 上小寄存器直接占用大寄存器的低位，比如 S31映射到 D31[0:31]</li><li>A32 上小寄存器是连续的被打包成大寄存器，比如 S31映射到 D15[32:63]</li></ul></li><li>A64 上SIMD 指令支持单精度、双精度浮点计算，A32 上仅仅支持单精度浮点</li></ol>]]></content>
+    <content type="html"><![CDATA[<p>ARMv8-A 上，A32，A64都支持<code>SIMD</code>, 但是有区别：</p><ol><li>A64 的指令助记符和语法重新设计了，数据类型与指令分开，跟A32不一样</li><li>A64 有 32个 128bit 向量寄存器。A32 只有 16个</li><li>不同的寄存器packing scheme：<ul><li>A64 上小寄存器直接占用相同index大寄存器的低位，比如 B31 -&gt; H31[0:8] -&gt; S31[0:8] -&gt; D31[0:8] -&gt; V31[0:8]，S31 -&gt; D31[0:31] -&gt; V31[0:31]</li><li>A32 上小寄存器是连续的打包在一起的，也就是说 B0<del>B31, H0</del>H31, S0~S31 被打包成大寄存器，比如 S31 映射到 D15[32:63]</li></ul></li><li>A64 上 SIMD 指令支持单精度、双精度浮点计算，A32 上仅仅支持单精度浮点</li></ol>]]></content>
     
     
       
       
     <summary type="html">&lt;p&gt;ARMv8-A 上，A32，A64都支持&lt;code&gt;SIMD&lt;/code&gt;, 但是有区别：&lt;/p&gt;
 &lt;ol&gt;
-&lt;li&gt;A64 的指令助记符和语法重新设计了，跟A32完全不一样&lt;/li&gt;
-&lt;li&gt;A64 有 32个 128bit 向量寄存器。A32 只有 16个&lt;/li&gt;
-&lt;</summary>
+&lt;li&gt;A64 的指令助记符和语法重新设计了，数据类型与指令分开，跟A32不一样&lt;/li&gt;
+&lt;li&gt;A64 有 32个 128bit 向量寄存器。A32 只有 16</summary>
       
     
     
@@ -78,11 +71,11 @@
   </entry>
   
   <entry>
-    <title>Arm Intro</title>
+    <title>Arm 入门简介</title>
     <link href="https://www.xbwee.space/2021/04/20/Arm-Intro/"/>
     <id>https://www.xbwee.space/2021/04/20/Arm-Intro/</id>
     <published>2021-04-20T10:54:00.000Z</published>
-    <updated>2021-05-04T17:13:17.631Z</updated>
+    <updated>2021-05-06T08:53:13.594Z</updated>
     
     <content type="html"><![CDATA[<p>基于<strong>ARM</strong>架构的<code>AISC</code>芯片主要是移动设备和嵌入式领域的王者，包括所有<strong>Android</strong>和<strong>iOS</strong>手机，各种平板电脑，以及越来越多的物联网设备。<br>2020年11月，Apple推出了搭载基于<code>ARMv8-A</code>64位处理器芯片<strong>M1</strong>的个人电脑，标志着<code>AISC</code>ARM架构正式落地个人PC市场。并且苹果宣布其旗下的系列产品，包括PC个人电脑，终将会替换为自研ARM芯片。<br>2021年4月，游戏和深度学习领域的<strong>GPU</strong>芯片霸主<strong>Nvidia</strong>正式宣布基于<strong>ARM</strong>自研CPU处理器，代号<code>Grace</code>。<br>这两个消息对<code>Intel</code>带来多大的影响我们暂且不谈，作为程序员我们更关注的是<code>x86</code>与<code>Arm</code>各自占据计算机设备半壁江山的今天，<code>ARM</code>凭借越来越明显的优势慢慢蚕食市场份额，将来一统天下也尚未可知。<br>那我们应该怎么做？</p><span id="more"></span><p>嗯，了解一下ARM发家史先…</p><h1 id="ARM-架构简史"><a href="#ARM-架构简史" class="headerlink" title="ARM 架构简史"></a>ARM 架构简史</h1><p>ARM 成立于上世纪 80 年代，总部在英国剑桥。第一代处理器<code>ARM1</code>诞生于1985年，实现了 load, store, arithmetic operations, exception model, register set，但是没有实用产品；第二代 <code>ARM2</code> 增加了 multiply, multiply-accumulate, coprocessors, 处理器仅仅支持 26bit 地址位宽，苹果公司的<code>Newton</code>个人电脑搭载该芯片。到了 <code>ARM3</code> 支持到了 32bit 地址空间，<code>ARM4</code> 增加了 16bit load/store，以及 kernel 级别的权限控制；从<code>ARMv4T</code> 开始，ARM 芯片被大规模使用，量产过十亿片。</p><p>从大规模量产芯片<code>ARMv4</code>开始，主要经历了以下几次重大修改：</p><ol><li><code>ARM1</code>,<code>ARM2</code>支持<code>26</code>位地址总线宽度</li><li><code>ARMv3</code>, <code>ARMv4</code> 仅支持<code>32</code>位定长指令集。</li><li><code>ARMv4T</code>，在32位ARM指令集的基础上，增加了16位<code>Thumb</code>定长指令集。这是第一个被广泛使用的架构，代表芯片<code>ARM7TDMI</code>和<code>ARM9TDMI</code>。</li><li><code>ARMv5TE</code>，增加了<code>DSP</code>操作，饱和运算，<code>ARM</code>和<code>Thumb</code>切换。代表芯片：<code>ARM926EJ-S</code>。</li><li><code>ARMv6</code>，做了重大修改，支持非对齐的内存访问，通用寄存器支持简单的<code>SIMD</code>指令，增加了<code>Thumb2</code>混合长度指令集，<strong>TrustZone</strong>等功能特性。代表芯片：<code>ARM1136JF-S</code></li><li><code>ARMv7-A</code>，将<code>v6</code>时可选的<code>Thumb2</code>指令集变成必选项；支持<code>NEON</code>扩展指令集。代表芯片<code>Cortex-A8</code>, <code>A9</code>, <code>A15</code>, <code>A17</code>。</li><li><code>ARMv8-A</code>，主要是增加了64位指令集支持，支持两种运行模式，64位的<code>AArch64</code>和32位的<code>AArch32</code>，其中<code>AArch32</code>跟原有的<code>ARMv7-A</code>架构是基本一样的，支持<code>A32</code>和<code>Thumb/Thumb2</code>指令集，而<code>AArch64</code>则仅支持<code>A64</code>指令集。代表芯片为<code>A57</code>, <code>A53</code>, <code>A72</code>, <code>A73</code>，<code>A75</code>, <code>A76</code> 等</li></ol><p>在早期，ARM 芯片命名都是<strong>ARM</strong>后跟数字表示一个系列，后面再加几个字母表示具有某些功能的具体型号。比如 <code>ARM7TDMI</code>, <code>T</code> 表示 Thumb, <code>D</code> 表示 Debug，<code>M</code> 表示 fast multiplier，<code>I</code> 表示 EmbeddedICE<br>在 <code>ARMv7</code> 之后，注册了新的商标 <code>Cortex</code>, 并且分成三个系列：</p><ol><li><code>Cortex-A</code> 表示高性能处理器系列，有 MMU，支持虚拟内存，可以跑完整的操作系统。主要用于手机，平板等移动设备。</li><li><code>Cortex-R</code> 表示实时处理芯片，低中断延迟，不支持虚拟地址，但是内存访问可以透过 MPU(Memory Protection Unit) 控制访问权限。</li><li><code>Cortex-M</code> 低功耗微处理器，低中断延迟，用在嵌入式领域。仅支持 Thumb 指令集。</li></ol><p>使用 <code>Android NDK</code> 编译 native C++ 库之后一般会编译<code>armeabi</code>，<code>armeabi-v7a</code>, <code>arm64-v8a</code>三种架构，代表了<code>ARM</code>目前最流行的三种架构的指令集。<code>armeabi</code>对应的是<code>ARMv4T~v7</code>的指令，为了节省空间，基本上都编成16位<code>Thumb</code>指令，或者16/32混合变长的<code>Thumb2</code>指令。<code>armeabi-v7a</code>对应<code>ARMv7-A</code>或者 <code>ARMv8-A</code>的 <code>AArch32</code>，支持<code>A32</code>指令集。<code>arm64-v8a</code>对应<code>ARMv8-A</code>的<code>AArch64</code>，仅支持<code>A64</code>指令集。</p><img src="/images/arm-arch-hist.jpg" class="" width="656" height="356" title="ARM芯片架构演进"><img src="/images/arm-arch-hist2.jpg" class="" width="656" height="356" title="ARM芯片架构演进"><p>Coprocessors: 协处理器<br>支持 0~15 总共16 个协处理器，早期的 ARM core 上支持外接协处理器，但是 Cortex-A 系列只支持内置SoC 上，重要的几个包括 CP15(系统控制 cache, MMU 等)，CP14(Debug), CP10/CP11 (Neon, VFP)</p><h1 id="Android所用的ARM芯片简史"><a href="#Android所用的ARM芯片简史" class="headerlink" title="Android所用的ARM芯片简史"></a><code>Android</code>所用的<code>ARM</code>芯片简史</h1><p>在<strong>Android</strong>刚出来的时候，HTC G1所用的高通MSM7201芯片,基于ARM11，用的是ARM v6指令集。<br>后来德州仪器的OMAP 3430第一次将Cortex-A系列的第一个架构Cortex-A8，引入现实世界中。开启了ARM v7a的时代。这个时代的代表机型就是Moto Droid/MileStone，开启了第一批百万级的Android手机。<br>随后，从NVidia的Tegra 2开始，我们进入了A9和双核的时代。Tegra 3使用Cortex-A15，在32位上达到一个高峰。<br>同时，以MediaTek为代表的中低端厂商开始将低端的Cortex-A7发挥到极致，MT6577是两个A7，MT6589为4个A7，MT6592是8个A7.<br>进入64位时代的代表芯片，就是Qualcomm的SnapDragon 810芯片，4个Cortex-A57的发热问题困扰了无数厂商去年整整一年。<br>MediaTek继续发挥低端的威力，升级成64位的Cortex-A53。MT6735芯片4个A53，MT6753芯片8个A53。幸好最近的Helix X25/20开始用A72+A53了，我们总算是在MTK芯片上见到一次大核的身影。</p><h1 id="IPhone所用的ARM芯片简史"><a href="#IPhone所用的ARM芯片简史" class="headerlink" title="IPhone所用的ARM芯片简史"></a><code>IPhone</code>所用的<code>ARM</code>芯片简史</h1><h1 id="ARMv7-A-架构简介"><a href="#ARMv7-A-架构简介" class="headerlink" title="ARMv7-A 架构简介"></a>ARMv7-A 架构简介</h1><h1 id="ARMv8-A-架构简介"><a href="#ARMv8-A-架构简介" class="headerlink" title="ARMv8-A 架构简介"></a>ARMv8-A 架构简介</h1>]]></content>
     
