@@ -16,6 +16,6 @@ https://www.xbwee.space/categories/android/
 https://www.xbwee.space/categories/android/hal/
 https://www.xbwee.space/categories/android/camera-hal/
 https://www.xbwee.space/categories/C/
-https://www.xbwee.space/categories/android/camera-hal/usbcamera/
 https://www.xbwee.space/categories/C/Android-NDK/
+https://www.xbwee.space/categories/android/camera-hal/usbcamera/
 https://www.xbwee.space/categories/C/Android-NDK/Compiler/
