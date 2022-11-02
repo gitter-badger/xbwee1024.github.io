@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
 <meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 5.4.0">
+<meta name="generator" content="Hexo 6.3.0">
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -124,7 +124,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">10</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">7</span></a>
 
   </li>
         <li class="menu-item menu-item-about">
@@ -139,7 +139,7 @@
   </li>
         <li class="menu-item menu-item-categories">
 
-    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">12</span></a>
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">7</span></a>
 
   </li>
         <li class="menu-item menu-item-hot">
@@ -278,7 +278,7 @@
 <h2 id="当前状态"><a href="#当前状态" class="headerlink" title="当前状态"></a>当前状态</h2><p><code>camera.v4l2</code> 可以自由使用，但是它不是由 <strong>Android Camera team</strong> 官方维护的， 实际上官方维护的是另外一个随着 <strong>Android P</strong> 一起更新发布的实现：<a target="_blank" rel="noopener" href="https://source.android.com/devices/camera/external-usb-cameras">External USB Cameras</a></p>
 <p>该 HAL 实现在现有 Android 系统默认是关闭的，不会编译到系统里面。可以按照如下方式打开</p>
 <h2 id="编译方法"><a href="#编译方法" class="headerlink" title="编译方法"></a>编译方法</h2><p>修改 <device>.mk 文件，增加如下配置：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">USE_CAMERA_V4L2_HAL :&#x3D; true</span><br><span class="line">PRODUCT_PACKAGES +&#x3D; camera.v4l2</span><br><span class="line">PRODUCT_PROPERTY_OVERRIDES +&#x3D; ro.hardware.camera&#x3D;v4l2</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">USE_CAMERA_V4L2_HAL := true</span><br><span class="line">PRODUCT_PACKAGES += camera.v4l2</span><br><span class="line">PRODUCT_PROPERTY_OVERRIDES += ro.hardware.camera=v4l2</span><br></pre></td></tr></table></figure>
 <p>第一行会打开编译选项，默认关闭，防止一些设备不支持出现问题。第二行告诉编译系统将库打包到 <code>system image</code> 里面；最后一行告诉硬件设备管理器加载 <code>V4L2 HAL</code> 替换掉默认的 <code>Camera HAL</code>.</p>
 <h2 id="前提条件"><a href="#前提条件" class="headerlink" title="前提条件"></a>前提条件</h2><ul>
 <li>camera 必须支持 <code>BGR32</code>, <code>YUV420</code> 和 <code>JPEG</code> 格式</li>
@@ -288,7 +288,7 @@
 <p>同时，你应该要了解一下 <strong>Android Framework</strong> 是如何与 <strong>HAL</strong> 打交道的，可以参考 <a href="/2020/10/23/Android-Camera-HAL-Intro/" title="Android Camera HAL 介绍">Android Camera HAL 介绍</a></p>
 <h3 id="Camera-amp-HAL-接口"><a href="#Camera-amp-HAL-接口" class="headerlink" title="Camera &amp; HAL 接口"></a>Camera &amp; HAL 接口</h3><p>接口实现主要是这两个类：<code>Camera</code>, <code>V4L2CameraHal</code></p>
 <p><code>V4L2CameraHAL</code> 主要负责相机系统初始化，创建时，会搜索 <code>dev/video*</code> 设备节点，并查询是否满足 <code>V4L2_CAP_VIDEO_CAPTURE</code> 然后创建对应的 <code>V4L2Camera</code> 对象，并且对 Framework 可见。后续流程调用会被 dispatch 到特定的设备节点。</p>
-<p><code>Camera</code> 类实现了 camera 设备的通用操作，打开/关闭设备、configuring streams、preparing and tradking requests 等等。具体的拍照、设置流程则是由其子类 <code>V4L2Camera</code> 实现。</p>
+<p><code>Camera</code> 类实现了 camera 设备的通用操作，打开&#x2F;关闭设备、configuring streams、preparing and tradking requests 等等。具体的拍照、设置流程则是由其子类 <code>V4L2Camera</code> 实现。</p>
 <p><code>Camera</code> 类在调用具体流程的时候，会应用上 <code>V4L2Camera</code> 初始化之后的 <code>Metadata</code> 属性，比如 <strong>in-flight</strong> request per stream 数量的限制。换句话说，<code>Camera</code> 类实现具体的 HAL 调用流程，与而具体的设备无关，而 <code>V4L2Camera</code> 负责设备相关的属性设置、功能实现（透过 <code>V4L2Wrapper</code> 类）。所以理论上，可以把 V4L2 实现换成其它某种设备实现，只要传递正确的 metadata 信息，<code>Camera</code> 类依然会按照预期的工作。</p>
 <h3 id="V4L2-具体实现"><a href="#V4L2-具体实现" class="headerlink" title="V4L2 具体实现"></a>V4L2 具体实现</h3><p><code>V4L2Camera</code> 实现所有拍照功能。它包含一些方法用来获取或设置参数，但它的核心能力主要是在 <code>request queue</code> 上。 <code>Camera</code> 提交 <code>CaptureRequest</code> 到 <code>request queue</code> 排队，<code>V4L2Camera</code> 异步地从队列里取出来执行，处理过程主要分三个阶段：</p>
 <ul>
@@ -297,7 +297,7 @@
 <li>dequeue：从驱动获取到处理完成的 frame，buffer 内容 copy 到 request output 并传递给 <code>Camera</code> 做后续处理（验证结果，填入 <code>CaptureResult</code> 并返回给 Framework）</li>
 </ul>
 <p>这项工作的大部分是 <code>V4L2Wrapper</code> 类完成的，它基于 HAL 的功能需求，包装了 v4l2 ioctls, 提供简单的输入输出调用功能。自动填入 ioctls 需要的常量参数，抽取 HAL 所需信息，同时把相关功能暴露给 Metadata 系统，获取、设置 meta 控制参数。</p>
-<h3 id="Metadata"><a href="#Metadata" class="headerlink" title="Metadata"></a>Metadata</h3><p><code>Metadata</code> 子系统主要目的是简化 (system/media/camera/docs/docs.html) 的相关操作。顶层是 <code>Metadata</code> 和 <code>PartialMetadataInterface</code> 类，<code>Metadata</code> 类提供高层次功能，包括初始化 <code>static metadata</code>，验证，获取、设定相关配置参数等等，它把这些需求下发给对应的 <code>PartialMetadataInterfaces</code> 模块，各个子模块负责处理自己相关的 metadata 和任务。</p>
+<h3 id="Metadata"><a href="#Metadata" class="headerlink" title="Metadata"></a>Metadata</h3><p><code>Metadata</code> 子系统主要目的是简化 (system&#x2F;media&#x2F;camera&#x2F;docs&#x2F;docs.html) 的相关操作。顶层是 <code>Metadata</code> 和 <code>PartialMetadataInterface</code> 类，<code>Metadata</code> 类提供高层次功能，包括初始化 <code>static metadata</code>，验证，获取、设定相关配置参数等等，它把这些需求下发给对应的 <code>PartialMetadataInterfaces</code> 模块，各个子模块负责处理自己相关的 metadata 和任务。</p>
 <p>已经实现了几个具体类负责这项功能，主要有 3 类：</p>
 <ul>
 <li>Properties：静态属性, static metadata 等</li>
@@ -315,7 +315,7 @@
 <li>另外，V4L2 的很多功能，并没有包含在 HAL 实现里面(比如与camera功能无关的),所以功能上讲, HAL 只是完整 V4L2 的一个子集。</li>
 </ul>
 <h2 id="已知问题"><a href="#已知问题" class="headerlink" title="已知问题"></a>已知问题</h2><ul>
-<li>该库未实现的功能包括：high speed capture, flash torch mode, hotplugging/unplugging</li>
+<li>该库未实现的功能包括：high speed capture, flash torch mode, hotplugging&#x2F;unplugging</li>
 </ul>
 
     </div>
@@ -434,14 +434,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">7</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
@@ -485,7 +485,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2021</span>
+  <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
@@ -494,12 +494,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">49k</span>
+    <span title="站点总字数">45k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">44 分钟</span>
+    <span title="站点阅读时长">41 分钟</span>
 </div>
   <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
   </div>
@@ -554,6 +554,61 @@
 
 
   
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
 
   
 

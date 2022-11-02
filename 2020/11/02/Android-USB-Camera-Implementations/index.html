@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
 <meta name="theme-color" content="#222">
-<meta name="generator" content="Hexo 5.4.0">
+<meta name="generator" content="Hexo 6.3.0">
   <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
@@ -124,7 +124,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">10</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">7</span></a>
 
   </li>
         <li class="menu-item menu-item-about">
@@ -139,7 +139,7 @@
   </li>
         <li class="menu-item menu-item-categories">
 
-    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">12</span></a>
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">7</span></a>
 
   </li>
         <li class="menu-item menu-item-hot">
@@ -287,17 +287,17 @@
 </blockquote>
 <ul>
 <li>UVC device discovery and management API</li>
-<li>Video streaming (device to host) with asynchronous/callback and synchronous/polling modes</li>
-<li>Read/write access to standard device settings</li>
+<li>Video streaming (device to host) with asynchronous&#x2F;callback and synchronous&#x2F;polling modes</li>
+<li>Read&#x2F;write access to standard device settings</li>
 <li>Conversion between various formats: RGB, YUV, JPEG, etc.</li>
 <li>Tested on Mac and Linux, portable to Windows and some BSDs</li>
 </ul>
 <p>代码支持 CMake，android 平台编译：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/libuvc/libuvc</span><br><span class="line"><span class="built_in">cd</span> libuvc</span><br><span class="line">mkdir build</span><br><span class="line"><span class="built_in">cd</span> build</span><br><span class="line">cmake \</span><br><span class="line">    -D CMAKE_INSTALL_PREFIX=your_install_path \</span><br><span class="line">    -D CMAKE_TOOLCHAIN_FILE=<span class="variable">$&#123;ANDROID_NDK&#125;</span>/build/cmake/android.toolchain.cmake \</span><br><span class="line">    -D CMAKE_BUILD_TYPE=Debug \</span><br><span class="line">    -D ANDROID_NDK=<span class="variable">$&#123;ANDROID_NDK&#125;</span> \</span><br><span class="line">    -D ANDROID_PLATFORM=android-28 \</span><br><span class="line">    -D ANDROID_STL=c++_static \</span><br><span class="line">    -D ANDROID_PIE=ON \</span><br><span class="line">    ..</span><br><span class="line">cmake --build . --config Debug --target install -- -j6</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/libuvc/libuvc</span><br><span class="line"><span class="built_in">cd</span> libuvc</span><br><span class="line"><span class="built_in">mkdir</span> build</span><br><span class="line"><span class="built_in">cd</span> build</span><br><span class="line">cmake \</span><br><span class="line">    -D CMAKE_INSTALL_PREFIX=your_install_path \</span><br><span class="line">    -D CMAKE_TOOLCHAIN_FILE=<span class="variable">$&#123;ANDROID_NDK&#125;</span>/build/cmake/android.toolchain.cmake \</span><br><span class="line">    -D CMAKE_BUILD_TYPE=Debug \</span><br><span class="line">    -D ANDROID_NDK=<span class="variable">$&#123;ANDROID_NDK&#125;</span> \</span><br><span class="line">    -D ANDROID_PLATFORM=android-28 \</span><br><span class="line">    -D ANDROID_STL=c++_static \</span><br><span class="line">    -D ANDROID_PIE=ON \</span><br><span class="line">    ..</span><br><span class="line">cmake --build . --config Debug --target install -- -j6</span><br></pre></td></tr></table></figure>
 
 <p>UVCCamera</p>
 <blockquote>
-<p>library and sample to access to UVC web camera on non-rooted Android device<br>Copyright (c) 2014-2017 saki <a href="mailto:&#x74;&#95;&#x73;&#97;&#107;&#105;&#x40;&#115;&#x65;&#x72;&#x65;&#110;&#x65;&#x67;&#105;&#x61;&#110;&#x74;&#46;&#x63;&#x6f;&#x6d;">&#x74;&#95;&#x73;&#97;&#107;&#105;&#x40;&#115;&#x65;&#x72;&#x65;&#110;&#x65;&#x67;&#105;&#x61;&#110;&#x74;&#46;&#x63;&#x6f;&#x6d;</a></p>
+<p>library and sample to access to UVC web camera on non-rooted Android device<br>Copyright (c) 2014-2017 saki <a href="mailto:&#116;&#x5f;&#115;&#x61;&#107;&#105;&#64;&#115;&#101;&#114;&#101;&#110;&#101;&#x67;&#x69;&#x61;&#x6e;&#x74;&#x2e;&#x63;&#111;&#109;">&#116;&#x5f;&#115;&#x61;&#107;&#105;&#64;&#115;&#101;&#114;&#101;&#110;&#101;&#x67;&#x69;&#x61;&#x6e;&#x74;&#x2e;&#x63;&#111;&#109;</a></p>
 </blockquote>
 <h1 id="Android-官方推出的-ExternalCamera"><a href="#Android-官方推出的-ExternalCamera" class="headerlink" title="Android 官方推出的 ExternalCamera"></a>Android 官方推出的 ExternalCamera</h1><p>随着 Android P 版本升级，新增了 <code>External USB Cameras</code> 这个功能，默认情况该功能是关闭的，一些 HAL 组件不会编译到 ROM 中，需要打开更新 ROM 才行。另外该功能还依赖于 <code>android.hardware.usb.host</code> 以及 Linux kernel 打开 <code>UVC</code> 驱动支持。</p>
 <p>该实现 HAL 会启动一个 <code>hotplug</code> 线程，监视 <code>/dev/video*</code> 设备节点增删情况，透过 HAL 回调函数通知 <code>CameraProviderManager</code> 更新 camera 设备列表。因为是 Google 原生支持，所以对上层 App Framework 来说，调用方式不需要变，依然调用 <code>Android Camera2 API</code>，只是看到的 cameraId 是类似 <code>/dev/video2</code> 之类的编号（内置相机是0，1，2 … 纯数字编号）</p>
@@ -440,14 +440,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">7</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-count">7</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
@@ -491,7 +491,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2021</span>
+  <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
@@ -500,12 +500,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-area"></i>
     </span>
-    <span title="站点总字数">49k</span>
+    <span title="站点总字数">45k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">44 分钟</span>
+    <span title="站点阅读时长">41 分钟</span>
 </div>
   <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
   </div>
@@ -560,6 +560,61 @@
 
 
   
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
 
   
 
